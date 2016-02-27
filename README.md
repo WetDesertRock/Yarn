@@ -11,6 +11,11 @@ heap.
   * Name inspired by cats.
 
 ##Usage:
+Compile yarn:
+```
+./build.sh
+```
+
 Assemble your code:
 ```
 ./tools/assemble.py code.asm code.o
@@ -21,15 +26,46 @@ Run it:
 ./bin/yarn code.o
 ```
 
-##Extending
-Currently there is no API for extending it with "system calls", however this
-is planned.
+If you want to enable some debug features to help you debug your code, compile
+yarn with -DYARN_DEBUG. You can pass this argument directly to ./build.sh:
+```
+./build.sh -DYARN_DEBUG
+```
 
-##Embedding
-See src/yarn.h
+##Embedding and Extending
+Embedding is designed to be simple. Here is a simple example of embedding it:
+```c
+Y = yarn_init(256*sizeof(yarn_int));
+yarn_loadCode(Y,buffer,bufsize);
+yarn_execute(Y, -1);
+yarn_destroy(Y);
+```
+
+`yarn_init` takes one argument, which is the number of bytes to allocate.
+Typically you will want to multiply this by the size of the basic int type that
+yarn uses. `yarn_loadCode` will copy the object code into memory so it can be
+executed. `yarn_execute` executes the specified number of instructions, or the
+whole program if -1 is specified.
+
+System calls are the main way of extending Yarn. After creating the yarn_State,
+you can register system calls to be used with it with the `yarn_registerSysCall`
+function. Here is an example of a system call.
+```c
+static void vyarn_getheight(yarn_State *Y) {
+  yarn_setRegister(Y, YARN_REG_RETURN, &screenHeight);
+}
+
+
+Y = yarn_init(256*sizeof(yarn_int));
+yarn_registerSysCall(Y, 0xA0, vyarn_getheight);
+```
+Note you explicitly set the ID for the system call. If there is a preexisting
+system call with the same ID, it will overwrite that system call and replace it.
 
 ##Memory Layout
-All of the program memory is in one chunk. It can be visualized like this:
+All of the program memory is in one chunk. While the amount of possible memory
+is set by the environment, if you had 0x400 bytes of memory allocated It could
+be visualized like this:
 
 ```
 Offset  |              Use              |
@@ -187,6 +223,22 @@ the specified register, and `$offset` is a literal specifying the offset in
 memory. Either the register or offset can be omitted. Examples: `*(%bse)`
 `*(%bse+$8)`.
 
+
+##System Calls
+System calls are used just the same as "call" instructions, except instead of
+calling a memory address it will give an ID to specify which function to call.
+An example of getting the available memory and storing it in memory address 0x0
+is:
+```x86
+syscall 0x02  ; stores available memory in %ret
+mov %ret, *(0x0) ; moves memory from %ret into 0x0
+```
+
+|  ID   | C equivalent declaration |                Description               |
+| ----: | ------------------------ | ---------------------------------------- |
+|  0x00 | uint time()              | Returns the current time of the computer |
+|  0x01 | uint cycles()            | Returns the current amount of cycles executed by the VM |
+|  0x02 | uint availablememory()   | Returns the number of bytes available to the VM |
 
 ##Roadmap
   * Create a proper assembler (with proper errors)  
