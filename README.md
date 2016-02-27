@@ -204,7 +204,7 @@ just by convention. Example: `%ret`
 **Literals** are represented in base 10 or base 16 and are prefixed with `$` or
 `0x` respectively to indicate as such. If trying to indicate a negative number,
 the negative sign goes in front of the `0x` and after the `$`. Examples: `$255`
-`0xFF` `-$255` `-0xFF`
+`0xFF` `$-255` `-0xFF`
 
 **Locations** are represented by a symbol in this format: `:Name` and get replaced
 with the location specified elsewhere in the assembly. They get specified in the
