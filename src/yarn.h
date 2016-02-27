@@ -32,13 +32,13 @@
 #endif
 #define YARN_MAP_MASK  (YARN_MAP_COUNT - 1)
 
-typedef struct yarn_State yarn_State;
+typedef struct yarn_state yarn_state;
 
 typedef int32_t yarn_int;
 typedef uint32_t yarn_uint;
-typedef void (*yarn_CFunc)(yarn_State *Y);
+typedef void (*yarn_CFunc)(yarn_state *Y);
 
-struct yarn_State {
+struct yarn_state {
   char *code;               /* The code that we will execute */
   size_t codesize;          /* The code size */
   void *memory;             /* Memory for the program. Contains registers, flags, everything */
@@ -48,33 +48,33 @@ struct yarn_State {
   struct { unsigned key; yarn_CFunc val; } syscalls[YARN_MAP_COUNT];
 };
 
-yarn_State *yarn_init(size_t memsize);
-void yarn_destroy(yarn_State *Y);
-void yarn_loadCode(yarn_State *Y, char *code, size_t codesize);
-int yarn_execute(yarn_State *Y, int cycles);
+yarn_state *yarn_init(size_t memsize);
+void yarn_destroy(yarn_state *Y);
+void yarn_loadCode(yarn_state *Y, char *code, size_t codesize);
+int yarn_execute(yarn_state *Y, int cycles);
 
 const char *yarn_registerToString(unsigned char reg);
 const char *yarn_statusToString(int status);
 
-void yarn_getRegister(yarn_State *Y, unsigned char reg, void *val) ;
-void yarn_setRegister(yarn_State *Y, unsigned char reg, void *val);
-void yarn_incRegister(yarn_State *Y, unsigned char reg, yarn_int val);
+void yarn_getRegister(yarn_state *Y, unsigned char reg, void *val) ;
+void yarn_setRegister(yarn_state *Y, unsigned char reg, void *val);
+void yarn_incRegister(yarn_state *Y, unsigned char reg, yarn_int val);
 
-void yarn_getMemory(yarn_State *Y, yarn_uint pos, void *val, size_t bsize);
-void yarn_setMemory(yarn_State *Y, yarn_uint pos, void *val, size_t bsize);
+void yarn_getMemory(yarn_state *Y, yarn_uint pos, void *val, size_t bsize);
+void yarn_setMemory(yarn_state *Y, yarn_uint pos, void *val, size_t bsize);
 
-void yarn_push(yarn_State *Y, yarn_int val);
-yarn_int yarn_pop(yarn_State *Y);
+void yarn_push(yarn_state *Y, yarn_int val);
+yarn_int yarn_pop(yarn_state *Y);
 
-int yarn_getStatus(yarn_State *Y);
-void yarn_setStatus(yarn_State *Y, unsigned char val);
+int yarn_getStatus(yarn_state *Y);
+void yarn_setStatus(yarn_state *Y, unsigned char val);
 
-int yarn_getFlag(yarn_State *Y, int flag);
-void yarn_setFlag(yarn_State *Y, int flag);
-void yarn_clearFlag(yarn_State *Y, int flag);
+int yarn_getFlag(yarn_state *Y, int flag);
+void yarn_setFlag(yarn_state *Y, int flag);
+void yarn_clearFlag(yarn_state *Y, int flag);
 
-void yarn_registerSysCall(yarn_State *Y, yarn_uint key, yarn_CFunc fun);
-yarn_CFunc yarn_getSysCall(yarn_State *Y, yarn_uint key);
+void yarn_registerSysCall(yarn_state *Y, yarn_uint key, yarn_CFunc fun);
+yarn_CFunc yarn_getSysCall(yarn_state *Y, yarn_uint key);
 
 enum {
   YARN_STATUS_OK,

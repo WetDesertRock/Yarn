@@ -5,21 +5,21 @@
 
 #include "yarn.h"
 
-static void yarn_sys_gettime(yarn_State *Y) {
+static void yarn_sys_gettime(yarn_state *Y) {
   yarn_int t = time(NULL);
   yarn_setRegister(Y, YARN_REG_RETURN, &t);
 }
-static void yarn_sys_getinstructioncount(yarn_State *Y) {
+static void yarn_sys_getinstructioncount(yarn_state *Y) {
   yarn_setRegister(Y, YARN_REG_RETURN, &Y->instructioncount);
 }
-static void yarn_sys_getvmmemory(yarn_State *Y) {
+static void yarn_sys_getvmmemory(yarn_state *Y) {
   yarn_setRegister(Y, YARN_REG_RETURN, &Y->memsize);
 }
 
-yarn_State *yarn_init(size_t memsize) {
+yarn_state *yarn_init(size_t memsize) {
   yarn_uint stackaddr;
   yarn_uint instaddr;
-  yarn_State *Y = malloc(sizeof(yarn_State));
+  yarn_state *Y = malloc(sizeof(yarn_state));
   Y->code = NULL;
   Y->memsize = memsize;
   Y->memory = calloc(memsize,1);
@@ -47,7 +47,7 @@ yarn_State *yarn_init(size_t memsize) {
   return Y;
 }
 
-void yarn_destroy(yarn_State *Y) {
+void yarn_destroy(yarn_state *Y) {
   if (Y->code != NULL) {
     free(Y->code);
   }
@@ -56,7 +56,7 @@ void yarn_destroy(yarn_State *Y) {
 }
 
 // Will copy given code to an internal buffer.
-void yarn_loadCode(yarn_State *Y, char *code, size_t codesize) {
+void yarn_loadCode(yarn_state *Y, char *code, size_t codesize) {
   Y->code = malloc(codesize);
   memcpy(Y->code, code, codesize);
   Y->codesize = codesize;
@@ -107,13 +107,13 @@ const char *yarn_statusToString(int status) {
 
 // Shortcuts for register manipulation
 #define registerLocation(r) Y->memsize-(yarn_uint)(r+2)*sizeof(yarn_uint)
-void yarn_getRegister(yarn_State *Y, unsigned char reg, void *val) {
+void yarn_getRegister(yarn_state *Y, unsigned char reg, void *val) {
   yarn_getMemory(Y, registerLocation(reg), val, sizeof(yarn_uint));
 }
-void yarn_setRegister(yarn_State *Y, unsigned char reg, void *val) {
+void yarn_setRegister(yarn_state *Y, unsigned char reg, void *val) {
   yarn_setMemory(Y, registerLocation(reg), val, sizeof(yarn_uint));
 }
-void yarn_incRegister(yarn_State *Y, unsigned char reg, yarn_int val) {
+void yarn_incRegister(yarn_state *Y, unsigned char reg, yarn_int val) {
   yarn_int rval;
   yarn_getRegister(Y, reg, &rval);
   rval += val;
@@ -122,14 +122,14 @@ void yarn_incRegister(yarn_State *Y, unsigned char reg, yarn_int val) {
 #undef registerLocation
 
 // Memory manipulations.
-void yarn_getMemory(yarn_State *Y, yarn_uint pos, void *val, size_t bsize) {
+void yarn_getMemory(yarn_state *Y, yarn_uint pos, void *val, size_t bsize) {
   if ((pos+bsize) > Y->memsize) { // Check for out-of-bounds
     yarn_setStatus(Y, YARN_STATUS_INVALIDMEMORY);
     return;
   }
   memcpy(val, ((char*)Y->memory)+pos, bsize);
 }
-void yarn_setMemory(yarn_State *Y, yarn_uint pos, void *val, size_t bsize) {
+void yarn_setMemory(yarn_state *Y, yarn_uint pos, void *val, size_t bsize) {
   if ((pos+bsize) > Y->memsize) { // Check for out-of-bounds
     yarn_setStatus(Y, YARN_STATUS_INVALIDMEMORY);
     return;
@@ -138,14 +138,14 @@ void yarn_setMemory(yarn_State *Y, yarn_uint pos, void *val, size_t bsize) {
 }
 
 // Pushs the stack
-void yarn_push(yarn_State *Y, yarn_int val) {
+void yarn_push(yarn_state *Y, yarn_int val) {
   yarn_uint stk;
   yarn_incRegister(Y, YARN_REG_STACK, -(int)sizeof(yarn_int));
   yarn_getRegister(Y, YARN_REG_STACK, &stk);
   yarn_setMemory(Y, stk, &val, sizeof(val));
 }
 // Pops the stack
-yarn_int yarn_pop(yarn_State *Y) {
+yarn_int yarn_pop(yarn_state *Y) {
   yarn_uint stk;
   yarn_int val;
   yarn_getRegister(Y, YARN_REG_STACK, &stk);
@@ -155,28 +155,28 @@ yarn_int yarn_pop(yarn_State *Y) {
 }
 
 // Gets the status of the execution. Status codes are given by YARN_STATUS_
-int yarn_getStatus(yarn_State *Y) {
+int yarn_getStatus(yarn_state *Y) {
   unsigned char val;
   yarn_getMemory(Y, Y->memsize-sizeof(yarn_int), &val, sizeof(val));
   return (int)val;
 }
-void yarn_setStatus(yarn_State *Y, unsigned char val) {
+void yarn_setStatus(yarn_state *Y, unsigned char val) {
   yarn_setMemory(Y, Y->memsize-sizeof(yarn_int), &val, sizeof(val));
 }
 
 // Gets the specified flag. Currently only used for the conditional flag.
-int yarn_getFlag(yarn_State *Y, int flag) {
+int yarn_getFlag(yarn_state *Y, int flag) {
   unsigned char val;
   yarn_getMemory(Y, Y->memsize-3, &val, sizeof(val));
   return (val>>flag)&1;
 }
-void yarn_setFlag(yarn_State *Y, int flag) {
+void yarn_setFlag(yarn_state *Y, int flag) {
   unsigned char val;
   yarn_getMemory(Y, Y->memsize-3, &val, sizeof(val));
   val |= 1 << flag;
   yarn_setMemory(Y, Y->memsize-3, &val, sizeof(val));
 }
-void yarn_clearFlag(yarn_State *Y, int flag) {
+void yarn_clearFlag(yarn_state *Y, int flag) {
   unsigned char val;
   yarn_getMemory(Y, Y->memsize-3, &val, sizeof(val));
   val &= ~(1 << flag);
@@ -191,7 +191,7 @@ static inline unsigned int hash_uint(unsigned int n) {
   return n * 2654435761;
 }
 
-void yarn_registerSysCall(yarn_State *Y, yarn_uint key, yarn_CFunc fun) {
+void yarn_registerSysCall(yarn_state *Y, yarn_uint key, yarn_CFunc fun) {
   unsigned int n = hash_uint(key);
   for (;;) {
     unsigned idx = n & YARN_MAP_MASK;
@@ -204,7 +204,7 @@ void yarn_registerSysCall(yarn_State *Y, yarn_uint key, yarn_CFunc fun) {
   }
 }
 
-yarn_CFunc yarn_getSysCall(yarn_State *Y, yarn_uint key) {
+yarn_CFunc yarn_getSysCall(yarn_state *Y, yarn_uint key) {
   unsigned n = hash_uint(key);
   for (;;) {
     unsigned idx = n & YARN_MAP_MASK;
@@ -295,7 +295,7 @@ yarn_CFunc yarn_getSysCall(yarn_State *Y, yarn_uint key) {
 }
 #endif
 
-int yarn_execute(yarn_State *Y, int icount) {
+int yarn_execute(yarn_state *Y, int icount) {
   yarn_uint ip;
   int instruction;
 
@@ -548,7 +548,7 @@ int yarn_execute(yarn_State *Y, int icount) {
  *     -m<file> - Dumps the memory state to a file. Ex: -mmemdump.mem
  *     -c<icount> - Limits execution to icount instructions. Ex: -c20
  */
-inline static void printProgramStatus(yarn_State *Y) {
+inline static void printProgramStatus(yarn_state *Y) {
   printf("Register contents:\n");
   yarn_uint rval;
   for (int r=0; r < 16; r++) {
@@ -561,7 +561,7 @@ inline static void printProgramStatus(yarn_State *Y) {
 int main(int argc, char **argv) {
   FILE *fp;
   size_t fsize;
-  yarn_State *Y;
+  yarn_state *Y;
   char *buffer;
   char *memoryfile = NULL;
   int icount = -1;

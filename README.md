@@ -47,11 +47,11 @@ yarn uses. `yarn_loadCode` will copy the object code into memory so it can be
 executed. `yarn_execute` executes the specified number of instructions, or the
 whole program if -1 is specified.
 
-System calls are the main way of extending Yarn. After creating the yarn_State,
+System calls are the main way of extending Yarn. After creating the yarn_state,
 you can register system calls to be used with it with the `yarn_registerSysCall`
 function. Here is an example of a system call.
 ```c
-static void vyarn_getheight(yarn_State *Y) {
+static void vyarn_getheight(yarn_state *Y) {
   yarn_setRegister(Y, YARN_REG_RETURN, &screenHeight);
 }
 
