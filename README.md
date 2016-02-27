@@ -124,7 +124,7 @@ Here are the available instructions:
   * *sub*
   * *mul*
   * *div*
-  * *divs* (signed), d will specify which systemcall to call.which call to make
+  * *divs* (signed)
   * *lsh* (left shift)
   * *rsh* (right shift)
   * *rshs* (right shift, signed)
