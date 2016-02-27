@@ -20,9 +20,16 @@ yarn_state *yarn_init(size_t memsize) {
   yarn_uint stackaddr;
   yarn_uint instaddr;
   yarn_state *Y = malloc(sizeof(yarn_state));
+  if (Y == NULL) {
+    return NULL;
+  }
   Y->code = NULL;
   Y->memsize = memsize;
   Y->memory = calloc(memsize,1);
+  if (Y->memory == NULL) {
+    free(Y);
+    return NULL;
+  }
 
   //Init our instruction pointer to 0
   instaddr = 0;
@@ -56,10 +63,17 @@ void yarn_destroy(yarn_state *Y) {
 }
 
 // Will copy given code to an internal buffer.
-void yarn_loadCode(yarn_state *Y, char *code, size_t codesize) {
+int yarn_loadCode(yarn_state *Y, char *code, size_t codesize) {
+  if (Y->code) {
+    free(Y->code);
+  }
   Y->code = malloc(codesize);
+  if (Y->code == NULL) {
+    return -1;
+  }
   memcpy(Y->code, code, codesize);
   Y->codesize = codesize;
+  return 0;
 }
 
 const char *yarn_registerToString(unsigned char reg) {
@@ -586,11 +600,22 @@ int main(int argc, char **argv) {
   fseek(fp, 0L, SEEK_SET);
 
   buffer = malloc(sizeof(char)*fsize);
+  if (buffer == NULL) {
+    printf("Unable to load object file.\n");
+    return EXIT_FAILURE;
+  }
   fread(buffer,1,fsize,fp);
   fclose(fp);
 
   Y = yarn_init(256*sizeof(yarn_int));
-  yarn_loadCode(Y,buffer,fsize);
+  if (Y == NULL) {
+    printf("Unable to create Yarn state.\n");
+    return EXIT_FAILURE;
+  }
+  if (yarn_loadCode(Y,buffer,fsize) != 0) {
+    printf("Unable to load Yarn object code.\n");
+    return EXIT_FAILURE;
+  }
 
   while (status == YARN_STATUS_OK) {
     status = yarn_execute(Y, icount);

@@ -48,10 +48,14 @@ struct yarn_state {
   struct { unsigned key; yarn_CFunc val; } syscalls[YARN_MAP_COUNT];
 };
 
+// Create the yarn state, returns NULL on failure
 yarn_state *yarn_init(size_t memsize);
+// Destroys the yarn state.
 void yarn_destroy(yarn_state *Y);
-void yarn_loadCode(yarn_state *Y, char *code, size_t codesize);
-int yarn_execute(yarn_state *Y, int cycles);
+// Loads the object code, returns 0 on success, -1 on failure.
+int yarn_loadCode(yarn_state *Y, char *code, size_t codesize);
+// Executes icount instructions (-1 for the whole program). Returns the status.
+int yarn_execute(yarn_state *Y, int icount);
 
 const char *yarn_registerToString(unsigned char reg);
 const char *yarn_statusToString(int status);
