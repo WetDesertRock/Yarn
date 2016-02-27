@@ -62,27 +62,25 @@ void yarn_loadCode(yarn_state *Y, char *code, size_t codesize) {
   Y->codesize = codesize;
 }
 
-
-#define enumcase(r,val) case r: result = val; break;
 const char *yarn_registerToString(unsigned char reg) {
   const char *result;
   switch(reg) {
-    enumcase(YARN_REG_INSTRUCTION,"%ins");
-    enumcase(YARN_REG_STACK,"%stk");
-    enumcase(YARN_REG_BASE,"%bse");
-    enumcase(YARN_REG_RETURN,"%ret");
-    enumcase(YARN_REG_C1,"%C1");
-    enumcase(YARN_REG_C2,"%C2");
-    enumcase(YARN_REG_C3,"%C3");
-    enumcase(YARN_REG_C4,"%C4");
-    enumcase(YARN_REG_C5,"%C5");
-    enumcase(YARN_REG_C6,"%C6");
-    enumcase(YARN_REG_S1,"%S1");
-    enumcase(YARN_REG_S2,"%S2");
-    enumcase(YARN_REG_S3,"%S3");
-    enumcase(YARN_REG_S4,"%S4");
-    enumcase(YARN_REG_S5,"%S5");
-    enumcase(YARN_REG_NULL,"%null");
+    case YARN_REG_INSTRUCTION: result = "%ins"; break;
+    case YARN_REG_STACK: result = "%stk"; break;
+    case YARN_REG_BASE: result = "%bse"; break;
+    case YARN_REG_RETURN: result = "%ret"; break;
+    case YARN_REG_C1: result = "%C1"; break;
+    case YARN_REG_C2: result = "%C2"; break;
+    case YARN_REG_C3: result = "%C3"; break;
+    case YARN_REG_C4: result = "%C4"; break;
+    case YARN_REG_C5: result = "%C5"; break;
+    case YARN_REG_C6: result = "%C6"; break;
+    case YARN_REG_S1: result = "%S1"; break;
+    case YARN_REG_S2: result = "%S2"; break;
+    case YARN_REG_S3: result = "%S3"; break;
+    case YARN_REG_S4: result = "%S4"; break;
+    case YARN_REG_S5: result = "%S5"; break;
+    case YARN_REG_NULL: result = "%null"; break;
     default:
       result = "invalid";
   }
@@ -92,18 +90,17 @@ const char *yarn_registerToString(unsigned char reg) {
 const char *yarn_statusToString(int status) {
   const char *result;
   switch(status) {
-    enumcase(YARN_STATUS_OK,"ok");
-    enumcase(YARN_STATUS_HALT,"halt");
-    enumcase(YARN_STATUS_PAUSE,"paused");
-    enumcase(YARN_STATUS_INVALIDMEMORY,"invalid memory access error");
-    enumcase(YARN_STATUS_INVALIDINSTRUCTION,"invalid instruction error");
-    enumcase(YARN_STATUS_DIVBYZERO,"divide by zero  error");
+    case YARN_STATUS_OK: result = "ok"; break;
+    case YARN_STATUS_HALT: result = "halt"; break;
+    case YARN_STATUS_PAUSE: result = "paused"; break;
+    case YARN_STATUS_INVALIDMEMORY: result = "invalid memory access error"; break;
+    case YARN_STATUS_INVALIDINSTRUCTION: result = "invalid instruction error"; break;
+    case YARN_STATUS_DIVBYZERO: result = "divide by zero  error"; break;
     default:
       result = "invalid";
   }
   return result;
 }
-#undef enumcase
 
 // Shortcuts for register manipulation
 #define registerLocation(r) Y->memsize-(yarn_uint)(r+2)*sizeof(yarn_uint)
@@ -552,8 +549,8 @@ inline static void printProgramStatus(yarn_state *Y) {
   printf("Register contents:\n");
   yarn_uint rval;
   for (int r=0; r < 16; r++) {
-    yarn_getRegister(Y, (char)r, &rval);
-    printf("\tReg: %-5s = 0x%08X   %d\n",yarn_registerToString((char)r), rval, rval);
+    yarn_getRegister(Y, r, &rval);
+    printf("\tReg: %-5s = 0x%08X   %d\n",yarn_registerToString(r), rval, rval);
   }
 
   printf("Status: %s\n",yarn_statusToString(yarn_getStatus(Y)));
@@ -582,7 +579,7 @@ int main(int argc, char **argv) {
   fp = fopen(argv[1], "r");
   if (!fp) {
     printf("Invalid object file.\n");
-    return 0;
+    return EXIT_FAILURE;
   }
   fseek(fp, 0L, SEEK_END);
   fsize = ftell(fp);
@@ -611,7 +608,7 @@ int main(int argc, char **argv) {
     fp = fopen(memoryfile, "w");
     if (!fp) {
       printf("Invalid memory dump name.\n");
-      return 0;
+      return EXIT_FAILURE;
     }
     fwrite(Y->memory, 1, Y->memsize, fp);
     fclose(fp);
