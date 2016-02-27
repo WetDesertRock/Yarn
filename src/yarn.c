@@ -9,6 +9,9 @@ static void yarn_sys_gettime(yarn_State *Y) {
   yarn_int t = time(NULL);
   yarn_setRegister(Y, YARN_REG_RETURN, &t);
 }
+static void yarn_sys_getinstructioncount(yarn_State *Y) {
+  yarn_setRegister(Y, YARN_REG_RETURN, &Y->instructioncount);
+}
 static void yarn_sys_getvmmemory(yarn_State *Y) {
   yarn_setRegister(Y, YARN_REG_RETURN, &Y->memsize);
 }
@@ -32,9 +35,10 @@ yarn_State *yarn_init(size_t memsize) {
   yarn_setRegister(Y, YARN_REG_BASE, &stackaddr);
 
   struct { yarn_uint id; yarn_CFunc fn; } syscalls[] = {
-    { 0x00,  yarn_sys_getvmmemory   },
-    { 0x01,  yarn_sys_gettime       },
-    { 0x00,  NULL                   }
+    { 0x00,  yarn_sys_getvmmemory               },
+    { 0x01,  yarn_sys_getinstructioncount       },
+    { 0x02,  yarn_sys_gettime                   },
+    { 0x00,  NULL                               }
   };
   for (int i = 0; syscalls[i].fn; i++) {
     yarn_registerSysCall(Y, syscalls[i].id, syscalls[i].fn);
