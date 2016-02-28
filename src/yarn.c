@@ -5,6 +5,22 @@
 
 #include "yarn.h"
 
+#ifndef YARN_MAP_COUNT
+#define YARN_MAP_COUNT 256 // Has to be a power-of-two
+#endif
+#define YARN_MAP_MASK  (YARN_MAP_COUNT - 1)
+
+struct yarn_state {
+  char *code;               // The code that we will execute
+  size_t codesize;          // The code size
+  void *memory;             // Memory for the program. Contains registers, flags, everything
+  size_t memsize;           // The total size of memory
+  size_t instructioncount;  // Total count of instuctions used
+  // Sys call hash map data structure:
+  struct { unsigned key; yarn_CFunc val; } syscalls[YARN_MAP_COUNT];
+};
+
+// Syscalls:
 static void yarn_sys_gettime(yarn_state *Y) {
   yarn_int t = time(NULL);
   yarn_setRegister(Y, YARN_REG_RETURN, &t);
@@ -16,6 +32,7 @@ static void yarn_sys_getvmmemory(yarn_state *Y) {
   yarn_setRegister(Y, YARN_REG_RETURN, &Y->memsize);
 }
 
+// yarn_functions
 yarn_state *yarn_init(size_t memsize) {
   yarn_uint stackaddr;
   yarn_uint instaddr;
@@ -74,6 +91,17 @@ int yarn_loadCode(yarn_state *Y, char *code, size_t codesize) {
   memcpy(Y->code, code, codesize);
   Y->codesize = codesize;
   return 0;
+}
+
+// Returns the pointer to its memory.
+void *yarn_getMemoryPtr(yarn_state *Y) {
+  return Y->memory;
+}
+size_t yarn_getMemorySize(yarn_state *Y) {
+  return Y->memsize;
+}
+size_t yarn_getInstructionCount(yarn_state *Y) {
+  return Y->instructioncount;
 }
 
 const char *yarn_registerToString(unsigned char reg) {
@@ -326,7 +354,7 @@ int yarn_execute(yarn_state *Y, int icount) {
     // Here we execute the specified function for the icode and increment the
     // instruction register.
     switch(instruction) {
-      /*   Control   */
+      //   Control
       case YARN_INST_HALT:
         yarn_setStatus(Y,YARN_STATUS_HALT);
         yarn_incRegister(Y, YARN_REG_INSTRUCTION, 1);
@@ -339,7 +367,7 @@ int yarn_execute(yarn_state *Y, int icount) {
         yarn_incRegister(Y, YARN_REG_INSTRUCTION, 1);
         break;
 
-      /*   Arith:   */
+      //   Arith:
       case YARN_INST_ADD:
         arithinst_setup();
         valB += valA;
@@ -421,7 +449,7 @@ int yarn_execute(yarn_state *Y, int icount) {
         yarn_incRegister(Y, YARN_REG_INSTRUCTION, 6);
         break;
 
-      /*   Move:   */
+      //   Move:
       case YARN_INST_IR:
         moveinst_setup();
         valA += d;
@@ -446,7 +474,7 @@ int yarn_execute(yarn_state *Y, int icount) {
         yarn_incRegister(Y, YARN_REG_INSTRUCTION, 6);
         break;
 
-      /*   Stack:   */
+      //   Stack:
       case YARN_INST_PUSH:
         stackinst_setup();
         yarn_getRegister(Y, rA, &valA);
@@ -460,7 +488,7 @@ int yarn_execute(yarn_state *Y, int icount) {
         yarn_incRegister(Y, YARN_REG_INSTRUCTION, 2);
         break;
 
-      /*   Branches:   */
+      //   Branches:
       case YARN_INST_CALL:
         branchinst_setup();
         yarn_push(Y, ip+5);
@@ -497,7 +525,7 @@ int yarn_execute(yarn_state *Y, int icount) {
         yarn_incRegister(Y, YARN_REG_INSTRUCTION, 5);
         break;
 
-      /*   Conditionals:   */
+      //   Conditionals:
       case YARN_INST_LT:
         conditionalinst_setup();
         if (valA < valB) yarn_setFlag(Y, YARN_FLAG_CONDITIONAL);
@@ -568,6 +596,8 @@ inline static void printProgramStatus(yarn_state *Y) {
   }
 
   printf("Status: %s\n",yarn_statusToString(yarn_getStatus(Y)));
+  printf("Instructions executed: %zu\n",yarn_getInstructionCount(Y));
+
 }
 int main(int argc, char **argv) {
   FILE *fp;
@@ -635,7 +665,7 @@ int main(int argc, char **argv) {
       printf("Invalid memory dump name.\n");
       return EXIT_FAILURE;
     }
-    fwrite(Y->memory, 1, Y->memsize, fp);
+    fwrite(yarn_getMemoryPtr(Y), 1, yarn_getMemorySize(Y), fp);
     fclose(fp);
     printf("Wrote memory dump: %s\n",memoryfile);
   }

@@ -27,26 +27,10 @@
 
 #define YARN_VERSION "0.0.1"
 
-#ifndef YARN_MAP_COUNT
-#define YARN_MAP_COUNT 256 // Has to be a power-of-two
-#endif
-#define YARN_MAP_MASK  (YARN_MAP_COUNT - 1)
-
 typedef struct yarn_state yarn_state;
-
 typedef int32_t yarn_int;
 typedef uint32_t yarn_uint;
 typedef void (*yarn_CFunc)(yarn_state *Y);
-
-struct yarn_state {
-  char *code;               /* The code that we will execute */
-  size_t codesize;          /* The code size */
-  void *memory;             /* Memory for the program. Contains registers, flags, everything */
-  size_t memsize;           /* The total size of memory */
-  size_t instructioncount;  /* Total count of instuctions used */
-  // Sys call hash map data structure:
-  struct { unsigned key; yarn_CFunc val; } syscalls[YARN_MAP_COUNT];
-};
 
 // Create the yarn state, returns NULL on failure
 yarn_state *yarn_init(size_t memsize);
@@ -56,6 +40,10 @@ void yarn_destroy(yarn_state *Y);
 int yarn_loadCode(yarn_state *Y, char *code, size_t codesize);
 // Executes icount instructions (-1 for the whole program). Returns the status.
 int yarn_execute(yarn_state *Y, int icount);
+
+void *yarn_getMemoryPtr(yarn_state *Y);
+size_t yarn_getMemorySize(yarn_state *Y);
+size_t yarn_getInstructionCount(yarn_state *Y);
 
 const char *yarn_registerToString(unsigned char reg);
 const char *yarn_statusToString(int status);
