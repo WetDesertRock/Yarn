@@ -130,6 +130,7 @@ Here are the available instructions:
   * *rshs* (right shift, signed)
   * *and*
   * *or*
+  * *xor*
   * *not*
 
 ### Move instructions
