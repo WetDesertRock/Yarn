@@ -72,18 +72,15 @@ yarn_state *yarn_init(size_t memsize) {
 }
 
 void yarn_destroy(yarn_state *Y) {
-  if (Y->code != NULL) {
-    free(Y->code);
-  }
+  free(Y->code);
   free(Y->memory);
   free(Y);
 }
 
 // Will copy given code to an internal buffer.
 int yarn_loadCode(yarn_state *Y, char *code, size_t codesize) {
-  if (Y->code) {
-    free(Y->code);
-  }
+  free(Y->code);
+
   Y->code = malloc(codesize);
   if (Y->code == NULL) {
     return -1;
