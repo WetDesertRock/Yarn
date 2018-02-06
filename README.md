@@ -1,8 +1,8 @@
-#Yarn
+# Yarn
 A small embeddable VM with a custom instruction set and statically allocated
 heap.
 
-##Overview
+## Overview
   * Simple instruction set.
   * Sequentially (non-pipelined) execution.
   * Single space memory, stack and heap occupy the same memory space.
@@ -10,7 +10,7 @@ heap.
   * ~25 instructions total.
   * Name inspired by cats.
 
-##Usage:
+## Usage:
 Compile yarn:
 ```
 ./build.sh
@@ -32,7 +32,7 @@ yarn with -DYARN_DEBUG. You can pass this argument directly to ./build.sh:
 ./build.sh -DYARN_DEBUG
 ```
 
-##Embedding and Extending
+## Embedding and Extending
 Embedding is designed to be simple. Here is a simple example of embedding it:
 ```c
 Y = yarn_init(256*sizeof(yarn_int));
@@ -62,7 +62,7 @@ yarn_registerSysCall(Y, 0xA0, vyarn_getheight);
 Note you explicitly set the ID for the system call. If there is a preexisting
 system call with the same ID, it will overwrite that system call and replace it.
 
-##Memory Layout
+## Memory Layout
 All of the program memory is in one chunk. While the amount of possible memory
 is set by the environment, if you had 0x400 bytes of memory allocated It could
 be visualized like this:
@@ -82,7 +82,7 @@ Offset  |              Use              |
 0x400   |         Not allocated         |
 ```
 
-##Registers
+## Registers
 Here is a list of registers
   * *%ins*       -  Instruction pointer
   * *%stk*       -  Stack pointer
@@ -93,7 +93,7 @@ Here is a list of registers
   * *%null*      -  Null register, used to indicate no register used
 
 
-##Instructions
+## Instructions
 Each instruction type has a specific format it uses for encoding. Given here is
 the encoding format with the byte offset given. The last byte of the next
 instruction is given as context. If two values are 4 bits each a, they are
@@ -187,7 +187,7 @@ complement signed integers.
   * *eq*  ( == )
   * *neq* ( != )
 
-##Assembler Syntax Primer
+## Assembler Syntax Primer
 The assembler as it stands is a very crude tool that gets the job done. This
 syntax outlined here is subject to change when I get around to improving the
 assembler. This is a primer for the syntax the assembler uses. You can use `;`
@@ -225,7 +225,7 @@ memory. Either the register or offset can be omitted. Examples: `*(%bse)`
 `*(%bse+$8)`.
 
 
-##System Calls
+## System Calls
 System calls are used just the same as "call" instructions, except instead of
 calling a memory address it will give an ID to specify which function to call.
 An example of getting the available memory and storing it in memory address 0x0
@@ -241,7 +241,7 @@ mov %ret, *(0x0) ; moves memory from %ret into 0x0
 |  0x01 | uint cycles()            | Returns the current amount of cycles executed by the VM |
 |  0x02 | uint availablememory()   | Returns the number of bytes available to the VM |
 
-##Roadmap
+## Roadmap
   * Create a proper assembler (with proper errors)  
   * Allow for some sort of linking/combining asm files
   * Debugging tools
